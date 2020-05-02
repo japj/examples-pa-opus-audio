@@ -1,0 +1,19 @@
+{
+  "name": "examples-pa-opus-audio",
+  "version": "0.1.0",
+  "description": "Examples for pa-opus-audio",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx tsc",
+    "test": "node index.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "@types/node": "^13.13.4",
+    "pa-opus-audio": "^0.1.0"
+  }
+}
