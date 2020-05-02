@@ -4,7 +4,7 @@
   "description": "Examples for pa-opus-audio",
   "main": "index.js",
   "scripts": {
-    "build": "npx tsc",
+    "pretest": "npx tsc",
     "test": "node index.js"
   },
   "author": "",
