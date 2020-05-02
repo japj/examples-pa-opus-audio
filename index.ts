@@ -154,9 +154,9 @@ class RtpServer {
         this.server.on('error', this.onError);
     }
 
-    onLocalMonitorEncodedFrameAvailable = (frame:Buffer) => {
-        
-        this.clients.forEach(function (session:RtpSession) {
+    onLocalMonitorEncodedFrameAvailable = (frame: Buffer) => {
+
+        this.clients.forEach(function (session: RtpSession) {
             session.sendPayload(frame);
         })
     }
@@ -226,4 +226,6 @@ console.log("Welcome at this rehearse20 experiment....");
 const rtpServer = new RtpServer();
 
 rtpServer.start(50050);
+
+
 
