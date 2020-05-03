@@ -2,7 +2,6 @@ import * as dgram from 'dgram';
 
 import { PoaInput, PoaOutput } from 'pa-opus-audio';
 import Rtp = require('./rtp');
-import { createBrotliCompress } from 'zlib';
 
 /* RtpSession parts based on https://github.com/MayamaTakeshi/rtp-session/blob/master/index.js MIT License
  * Copyright (c) 2020 MayamaTakeshi
@@ -135,7 +134,6 @@ class RtpServer {
     constructor() {
         // creating a udp server
         this.server = dgram.createSocket('udp4');
-        console.log(this.server);
 
         this.clients = new Map<string, RtpSession>()
 
@@ -189,8 +187,6 @@ class RtpServer {
     }
 
     onListening = () => {
-        console.log(this);
-        console.log(this.server);
         var address = this.server.address();
         var port = address.port;
         var family = address.family;
