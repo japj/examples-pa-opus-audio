@@ -3,6 +3,12 @@ import * as dgram from 'dgram';
 import { PoaInput, PoaOutput } from 'pa-opus-audio';
 import Rtp = require('./rtp');
 
+import { ui, prompt, Separator } from 'inquirer';
+import isIp = require('is-ip');
+
+//var myUi = new ui.BottomBar();
+const log = console.log;//myUi.log.write;
+
 /* RtpSession parts based on https://github.com/MayamaTakeshi/rtp-session/blob/master/index.js MIT License
  * Copyright (c) 2020 MayamaTakeshi
  */
@@ -14,7 +20,7 @@ class RtpSessionInfo {
 }
 class RtpSession {
 
-    constructor(socket: dgram.Socket, remote: dgram.RemoteInfo) {
+    constructor(socket: dgram.Socket, ip: string, port: number) {
 
         let version = 2;
         let padding = 0;
@@ -23,7 +29,8 @@ class RtpSession {
         let marker = 0;
         this._hdr = Buffer.alloc(12);
         this._info = new RtpSessionInfo();
-        this._remote = remote;
+        this._remote_ip = ip;
+        this._remote_port = port;
         this._socket = socket;
 
         this.output = new PoaOutput();
@@ -61,7 +68,7 @@ class RtpSession {
         buf[6] = time_stamp >>> 8 & 0xFF
         buf[7] = time_stamp & 0xFF
 
-        this._socket.send(buf, 0, buf.length, this._remote.port, this._remote.address)
+        this._socket.send(buf, 0, buf.length, this._remote_port, this._remote_ip)
     }
 
     receivePayload(payload: Buffer) {
@@ -70,7 +77,8 @@ class RtpSession {
 
     _hdr: Buffer;
     _info: RtpSessionInfo;
-    _remote: dgram.RemoteInfo;
+    _remote_ip: string;
+    _remote_port: number;
     _socket: dgram.Socket;
     output: PoaOutput;
 }
@@ -88,6 +96,7 @@ class LocalMonitor {
         /** this is for recording mic and playback on own output device so you can hear what you say */
         this.localInput.setEncodedFrameAvailableCallback(this.encodedFrameAvailable);
         this.encodedFrameAvailableCb = cb;
+        this.localPlayback = true;
     };
 
     initInOutput() {
@@ -100,11 +109,12 @@ class LocalMonitor {
             this.contentCount++;
             this.totalLength += b.byteLength;
 
-            this.localOutput.decodeAndPlay(b);
-
+            if (this.localPlayback) {
+                this.localOutput.decodeAndPlay(b);
+            }
             if (this.logStats) {
                 if (this.contentCount % 100 == 0) {
-                    console.log(`local: contentCount: ${this.contentCount}, totalLength: ${this.totalLength}`);
+                    log(`local: contentCount: ${this.contentCount}, totalLength: ${this.totalLength}`);
                 }
             }
         }
@@ -113,21 +123,22 @@ class LocalMonitor {
 
             if (this.logStats) {
                 if (this.contentCount % 100 == 0) {
-                    console.log(`local: emptyCount: ${this.emptyCount}`);
+                    log(`local: emptyCount: ${this.emptyCount}`);
                 }
             }
         }
         this.encodedFrameAvailableCb(b);
     }
 
-    contentCount: number;
-    emptyCount: number;
-    totalLength: number;
-    logStats: boolean;
+    localPlayback: boolean;
+    private contentCount: number;
+    private emptyCount: number;
+    private totalLength: number;
+    private logStats: boolean;
 
-    localInput: PoaInput;
-    localOutput: PoaOutput;
-    encodedFrameAvailableCb: Function;
+    private localInput: PoaInput;
+    private localOutput: PoaOutput;
+    private encodedFrameAvailableCb: Function;
 }
 
 class RtpServer {
@@ -165,9 +176,8 @@ class RtpServer {
 
         //console.log(`'${clientKey}' send msg with length ${msg.length}`);
         if (!this.clients.has(clientKey)) {
-            console.log(`NEW client detected at: ${clientKey}`);
-            let rtpClient = new RtpSession(this.server, info);
-            this.clients.set(clientKey, rtpClient);
+            log(`NEW client detected at: ${clientKey}`);
+            this.addClient(info.address, info.port);
         }
         let currentClient = this.clients.get(clientKey);
         if (currentClient) {
@@ -186,29 +196,38 @@ class RtpServer {
         //console.log(`status: ${status}`);
     }
 
+    addClient(ip: string, port: number) {
+        let clientKey = `${ip}:${port}`;
+        log(`ADDing client: ${clientKey}`);
+        let rtpClient = new RtpSession(this.server, ip, port);
+        this.clients.set(clientKey, rtpClient);
+    }
+
     onListening = () => {
         var address = this.server.address();
         var port = address.port;
         var family = address.family;
         var ipaddr = address.address;
-        console.log('Server is listening at port:' + port);
-        console.log('Server ip :' + ipaddr);
-        console.log('Server is IP4/IP6 :' + family);
+        log('Server is listening at port:' + port);
+        log('Server ip :' + ipaddr);
+        log('Server is IP4/IP6 :' + family);
+
+        setTimeout(mainMenu, 1000);
     }
 
     onClose = () => {
-        console.log('Socket is closed !');
+        log('Socket is closed !');
     }
 
     start(port: number) {
-        console.log("monitor.initInOutput");
+        log("monitor.initInOutput");
         this.monitor.initInOutput();
-        console.log("server.bind");
+        log("server.bind");
         this.server.bind(port);
     }
 
     onError = (error: string) => {
-        console.log('Error: ' + error);
+        log('Error: ' + error);
         this.server.close();
     }
 
@@ -218,10 +237,70 @@ class RtpServer {
     clients: Map<string, RtpSession>;
 }
 
-console.log("Welcome at this rehearse20 experiment....");
+log("Welcome at this rehearse20 experiment....");
 const rtpServer = new RtpServer();
 
+// Or simply write output
+log('... going to start local rtpServer.');
 rtpServer.start(50050);
 
+function mainMenu() {
+    log("");
+    prompt([
+        {
+            type: 'list',
+            name: 'what',
+            message: 'What do you want to do?',
+            choices: [
+                'Add new client connection',
+                '(Un)Mute Local Monitoring',
+            ]
+        }])
+        .then(answers => {
+            if (answers.what == 'Add new client connection') {
+                setTimeout(connectNewClient);
+            } else
+                if (answers.what == '(Un)Mute Local Monitoring') {
+                    rtpServer.monitor.localPlayback = !rtpServer.monitor.localPlayback;
+                    setTimeout(mainMenu, 1000);
+                }
+        });
+};
 
+function connectNewClient() {
+    log("");
+    prompt([
+        {
+            type: 'input',
+            name: 'client_ip',
+            message: "What is the client ip addres?",
+            default: function () {
+                return "127.0.0.1";
+            },
+            validate: function (value) {
+                return isIp(value);
+            }
+        },
+        {
+            type: 'input',
+            name: 'client_port',
+            message: "What is the client port?",
+            default: function () {
+                return "50050";
+            },
+            validate: function (value) {
+                return ((value >= 0) && (value < (Math.pow(2, 16))));;
+            }
+        }])
+        .then(answers => {
+            log(JSON.stringify(answers, null, '  '));
+            rtpServer.addClient(answers.client_ip, answers.client_port);
+            setTimeout(mainMenu, 1000);
+        });
+}
 
+// During processing, update the bottom bar content to display a loader
+// or output a progress bar, etc
+//myUi.updateBottomBar('new bottom bar content');
+
+//mainMenu();
