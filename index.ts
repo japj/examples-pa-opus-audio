@@ -305,9 +305,9 @@ function connectNewClient() {
 
 //mainMenu();
 
-import { MyClass } from './rtplib/api';
+import { P2PSession, P2PConnection } from './rtplib/api';
 
-const m = new MyClass();
+const m = new P2PSession();
 m.on('SSRS changed', function (newSSRS: string, oldSSRS: string) {
     console.log("SSRS changed from " + oldSSRS + " to " + newSSRS);
 });
@@ -316,3 +316,8 @@ console.log(m.getSSRS());
 m.on('SSRS changed', function (n, o) {
 
 })
+
+//m.addPeer(p);
+const p: P2PConnection = { host: "foo", port: 10, SSRS: "bls" };
+m.addPeer(p);
+

@@ -18,55 +18,55 @@ import { TypedEmitter } from 'tiny-typed-emitter';
   - assume eventual udp/rtp implementation in C++ due to audio processing directly in C++, but still need js api for control/monitoring
  */
 
-
-
-/*
-
- - event: 'SSRS changed'
-   - due to initial generation of SSRS
-   - due to collision resolution and loop detection
-
- -
-
-*/
-
-interface P2PConnection {
-  host: string;
-  port: number;
-  SSRS: string;
+class P2PConnection {
+  /**
+   * The host ip address in IPV4 syntax
+   */
+  host: string = "";
+  /**
+   * The socket port in IPV4 syntax
+   */
+  port: number = 0;
+  /**
+   * The SSRS according to the RTP specification
+   */
+  SSRS: string = "";
 }
 
-function SSRSChanged(newSSRS: string, oldSSRS: string): void { }
-
-/**
- * an SSRS changed event can occur when the initial SSRS is generated or when a collision is detected
- * @param newSSRS the newly generated SSRS
- * @param oldSSRS the previous SSRS (can be empty if this the initial SSRS generation)
- */
-type SSRSChangedFunction = (newSSRS: string, oldSSRS: string) => void;
-
 interface P2PSessionEvents {
-
-  'SSRS changed': SSRSChangedFunction;
+  /**
+   * Notifies that an SSRS change has occured
+   * 
+   * @remarks a change can occur due to initial SSRS calculation or due to a collision detection
+   * 
+   * @param newSSRS The newly generated SSRS
+   * @param oldSSRS The previous SSRS (can be empty if this the initial SSRS generation)
+   */
+  'SSRS changed': (newSSRS: string, oldSSRS: string) => void;
   'unknown connection detected': (peer: P2PConnection) => void;
   'peer connection added': (peer: P2PConnection) => void;
   'peer connection removed': (peer: P2PConnection) => void;
 }
 
-
-class MyClass extends TypedEmitter<P2PSessionEvents> {
+class P2PSession extends TypedEmitter<P2PSessionEvents> {
   constructor() {
     super();
   }
 
-
   /**
-   * @returns the current SSRS
+   * Returns the current SSRS
+   * @returns The current SSRS
    */
   getSSRS(): string {
     return "";
   }
 
+  /**
+   * Adds a peer to the session
+   * 
+   * @remarks This whitelists incoming RTP/RTCP data from this peer
+   * @param peer The peer connection information
+   */
   addPeer(peer: P2PConnection) {
   }
 
@@ -77,11 +77,10 @@ class MyClass extends TypedEmitter<P2PSessionEvents> {
     return [];
   }
 
-
   // just to check the typed emitter api
   private doit() {
     this.emit('SSRS changed', "foo", "bar");
   }
 }
 
-export { MyClass };
+export { P2PSession, P2PConnection };
