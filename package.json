@@ -18,6 +18,7 @@
     "@types/node": "^13.13.4",
     "inquirer": "^7.1.0",
     "is-ip": "^3.1.0",
-    "pa-opus-audio": "*"
+    "pa-opus-audio": "*",
+    "tiny-typed-emitter": "^2.0.1"
   }
 }

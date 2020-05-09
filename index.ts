@@ -304,3 +304,10 @@ function connectNewClient() {
 //myUi.updateBottomBar('new bottom bar content');
 
 //mainMenu();
+
+import { MyClass } from './rtplib/api';
+
+const m = new MyClass();
+m.on('SSRS changed', function (newSSRS: string, oldSSRS: string) {
+    console.log("SSRS changed from " + oldSSRS + " to " + newSSRS);
+});

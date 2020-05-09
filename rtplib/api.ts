@@ -1,3 +1,4 @@
+import { TypedEmitter } from 'tiny-typed-emitter';
 
 /*
   Ideas:
@@ -16,3 +17,32 @@
   - rtp and rtcp multiplexed on the same port
   - assume eventual udp/rtp implementation in C++ due to audio processing directly in C++, but still need js api for control/monitoring
  */
+
+
+
+/*
+
+ - event: 'SSRS changed'
+   - due to initial generation of SSRS
+   - due to collision resolution and loop detection
+
+ -
+
+*/
+
+interface P2PSessionEvents {
+    'SSRS changed': (newSSRS: string, oldSSRS: string) => void;
+}
+
+
+class MyClass extends TypedEmitter<P2PSessionEvents> {
+    constructor() {
+        super();
+    }
+
+    doit() {
+        this.emit('SSRS changed', "foo", "bar");
+    }
+}
+
+export { MyClass };
