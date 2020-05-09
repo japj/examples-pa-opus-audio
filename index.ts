@@ -311,3 +311,4 @@ const m = new MyClass();
 m.on('SSRS changed', function (newSSRS: string, oldSSRS: string) {
     console.log("SSRS changed from " + oldSSRS + " to " + newSSRS);
 });
+console.log(m.getSSRS());

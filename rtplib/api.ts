@@ -31,18 +31,22 @@ import { TypedEmitter } from 'tiny-typed-emitter';
 */
 
 interface P2PSessionEvents {
-    'SSRS changed': (newSSRS: string, oldSSRS: string) => void;
+  'SSRS changed': (newSSRS: string, oldSSRS: string) => void;
 }
 
 
 class MyClass extends TypedEmitter<P2PSessionEvents> {
-    constructor() {
-        super();
-    }
+  constructor() {
+    super();
+  }
 
-    doit() {
-        this.emit('SSRS changed', "foo", "bar");
-    }
+  doit() {
+    this.emit('SSRS changed', "foo", "bar");
+  }
+
+  getSSRS(): string {
+    return "";
+  }
 }
 
 export { MyClass };
